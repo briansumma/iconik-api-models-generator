@@ -7,9 +7,11 @@ for each Iconik API specification based on the OpenAPI v3 specification
 `component.schemas` objects.
 """
 import argparse
+import glob
 import json
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -155,7 +157,7 @@ def extract_all_schemas(
     """
     all_schemas = {}
 
-    for spec_name, spec in specs.items():
+    for _, spec in specs.items():
         if "components" in spec and "schemas" in spec["components"]:
             for schema_name, schema in spec["components"]["schemas"].items():
                 all_schemas[schema_name] = schema
@@ -282,6 +284,7 @@ def openapi_type_to_python(
     return type_hint
 
 
+# pylint: disable=unused-argument
 def handle_oneof_anyof(
     schema: Dict[str, Any],
     all_schemas: Dict[str, Dict[str, Any]],
@@ -355,7 +358,8 @@ def generate_models(
     Generate Pydantic models from OpenAPI schemas.
 
     Args:
-        schemas: Dictionary mapping specification names to their component schemas
+        schemas: Dictionary mapping specification names to their component
+            schemas
         all_schemas: Dictionary of all schemas
 
     Returns:
@@ -372,7 +376,8 @@ def generate_models(
         for model_name, schema in spec_schemas.items():
             # Handle oneOf/anyOf at the top level
             if "oneOf" in schema or "anyOf" in schema:
-                # Pass model_names to handle_oneof_anyof to identify forward references
+                # Pass model_names to handle_oneof_anyof to identify forward
+                # references
                 type_hint = handle_oneof_anyof(schema, all_schemas, model_names)
 
                 model = {
@@ -450,7 +455,8 @@ def generate_model_field(
         model_names: Set of model names to check for forward references
 
     Returns:
-        Tuple of (field_name, field_info) where field_info contains type_hint and default
+        Tuple of (field_name, field_info) where field_info contains type_hint
+            and default
     """
     if model_names is None:
         model_names = set()
@@ -556,7 +562,7 @@ def generate_model_field(
 
         default = "Field(default_factory=list)"
         if has_invalid_chars:
-            default = f'Field(default_factory=list, alias="{original_field_name}")'
+            default = f'Field(default_factory=list, alias="{original_field_name}")'  # pylint: disable=line-too-long
 
         if is_required:
             if has_invalid_chars:
@@ -596,7 +602,7 @@ def generate_model_field(
 
         default = "Field(default_factory=dict)"
         if has_invalid_chars:
-            default = f'Field(default_factory=dict, alias="{original_field_name}")'
+            default = f'Field(default_factory=dict, alias="{original_field_name}")'  # pylint: disable=line-too-long
 
         if is_required:
             if has_invalid_chars:
@@ -891,7 +897,8 @@ def create_module_file(
 
 def get_calendar_version(patch=None, modifier=None, modifier_num=None):
     """
-    Generate a calendar-based version string in the format YYYY.M[.P][-modifier.N]
+    Generate a calendar-based version string in the format
+    YYYY.M[.P][-modifier.N]
 
     Args:
         patch: Optional patch number
@@ -1039,6 +1046,10 @@ def format_generated_code(output_dir: str, format_code: bool = False) -> None:
         ],
         "check": lambda: shutil.which("isort") is not None
     }, {
+        "name": "remove_empty_lines",
+        "cmd": get_empty_line_removal_command(output_dir),
+        "check": lambda: shutil.which("sed") is not None
+    }, {
         "name": "yapf",
         "cmd": [
             "yapf", "--in-place", "--recursive", "--print-modified", output_dir
@@ -1048,6 +1059,15 @@ def format_generated_code(output_dir: str, format_code: bool = False) -> None:
 
     for formatter in formatters:
         if formatter["check"]():
+            # Skip if command is None (which can happen for the sed command on
+            # Windows)
+            if formatter["cmd"] is None:
+                logger.warning(
+                    "Skipping %s as it's not properly supported on this OS",
+                    formatter["name"]
+                )
+                continue
+
             logger.info("Running %s...", formatter["name"])
             try:
                 result = subprocess.run(
@@ -1062,9 +1082,39 @@ def format_generated_code(output_dir: str, format_code: bool = False) -> None:
                         "%s output: %s", formatter["name"], result.stdout
                     )
             except subprocess.CalledProcessError as e:
-                logger.error("%s failed: %s", formatter["name"], e.stderr)
+                logger.error(
+                    "%s failed with code %d: %s", formatter["name"],
+                    e.returncode, e.stderr
+                )
         else:
             logger.warning("%s not found. Skipping.", formatter["name"])
+
+
+def get_empty_line_removal_command(output_dir: str) -> Optional[List[str]]:
+    """
+    Generate the appropriate command to remove empty lines based on OS.
+
+    Args:
+        output_dir: Directory containing Python files to process
+
+    Returns:
+        A command list for subprocess or None if not supported
+    """
+    system = platform.system()
+
+    if system == "Windows":
+        # sed on Windows works differently and is often not reliable
+        # Alternative could be to use Python to process files directly
+        return None
+
+    python_files = glob.glob(
+        os.path.join(output_dir, "**/*.py"), recursive=True
+    )
+    cmds = ["sed", "-i", "", "-e", "s/[[:space:]]*$//", "-e", "/^$/d"
+            ] if system == "Darwin" else [
+                "sed", "-i", "-e", "s/[[:space:]]*$//", "-e", "/^$/d"
+            ]
+    return cmds + python_files
 
 
 # Update main function to include the formatting option
