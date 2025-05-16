@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Assets Models
 This module contains Pydantic models for the Iconik Assets API.
@@ -2093,6 +2094,15 @@ class Segment(BaseModel):
     version_id: Optional[UUID] = None
 
 
+class FaceBoundingBox(BaseModel):
+    """Represents a FaceBoundingBox in the Iconik system."""
+    bounding_box: Optional[List[float]] = Field(default_factory=list)
+    face_id: UUID
+    timestamp_ms: Optional[int] = Field(
+        None, ge=-9223372036854775808, le=9223372036854775807
+    )
+
+
 class TranscriptionType(BaseModel):
     """Represents a TranscriptionType in the Iconik system."""
     speaker: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
@@ -2105,15 +2115,6 @@ class TranscriptionElementType(BaseModel):
     score: Optional[float] = None
     start_ms: int = Field(..., ge=-9223372036854775808, le=9223372036854775807)
     value: str
-
-
-class FaceBoundingBox(BaseModel):
-    """Represents a FaceBoundingBox in the Iconik system."""
-    bounding_box: Optional[List[float]] = Field(default_factory=list)
-    face_id: UUID
-    timestamp_ms: Optional[int] = Field(
-        None, ge=-9223372036854775808, le=9223372036854775807
-    )
 
 
 class BulkCollectionTransferSchema(BaseModel):
@@ -2999,9 +3000,9 @@ BulkDeleteSchema.model_rebuild()
 BulkDeleteFromFavoritesSchema.model_rebuild()
 BulkCreateSegmentsSchema.model_rebuild()
 Segment.model_rebuild()
+FaceBoundingBox.model_rebuild()
 TranscriptionType.model_rebuild()
 TranscriptionElementType.model_rebuild()
-FaceBoundingBox.model_rebuild()
 BulkCollectionTransferSchema.model_rebuild()
 BulkCollectionTranscribeSchema.model_rebuild()
 BulkCollectionTranscodeSchema.model_rebuild()

@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Users-notifications Models
 This module contains Pydantic models for the Iconik Users-notifications API.

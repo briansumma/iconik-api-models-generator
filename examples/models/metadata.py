@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Metadata Models
 This module contains Pydantic models for the Iconik Metadata API.

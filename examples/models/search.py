@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Search Models
 This module contains Pydantic models for the Iconik Search API.

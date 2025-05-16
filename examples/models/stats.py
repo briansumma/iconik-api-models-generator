@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Stats Models
 This module contains Pydantic models for the Iconik Stats API.

@@ -23,7 +23,7 @@ dependencies = [
     "requests~=2.32.3",
 ]
 description = "Script to download Iconik API specifications and generate Pydantic v2 models"
-# dynamic = ["version"]
+dynamic = ["version"]
 keywords = ["iconik", "api", "client", "generator", "openapi"]
 license = {text = "MIT"}
 maintainers = [
@@ -32,7 +32,6 @@ maintainers = [
 name = "generate-iconik-models"
 readme = "README.md"
 requires-python = ">=3.9"
-version = "2025.5-beta.2"
 
 [project.optional-dependencies]
 dev = [
@@ -440,6 +439,9 @@ ignore-decorators = ["__.*__", "test.*", ".*test", ".*Test"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {attr = "generate_iconik_models.__version__"}
 
 [tool.yapf]
 allow_split_before_dict_value = false

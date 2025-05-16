@@ -15,11 +15,15 @@ import platform
 import shutil
 import subprocess
 import sys
+from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import requests
 from jinja2 import Environment, FileSystemLoader
+
+
+__version__ = "2025.5-beta.3"
 
 # Configure logging
 logging.basicConfig(
@@ -86,7 +90,7 @@ def download_specs(output_dir: str) -> Dict[str, Dict[str, Any]]:
     Returns:
         Dict mapping specification names to their parsed JSON content
     """
-    specs = {}
+    specs = OrderedDict()
 
     for spec_name in SPEC_NAMES:
         url = BASE_URL.format(spec_name)
@@ -97,13 +101,16 @@ def download_specs(output_dir: str) -> Dict[str, Dict[str, Any]]:
             response.raise_for_status()
 
             # Parse the JSON content
-            spec_json = response.json()
+            spec_json = json.loads(
+                response.content,
+                object_pairs_hook=lambda pairs: OrderedDict(pairs),  # pylint: disable=unnecessary-lambda
+            )
             specs[spec_name] = spec_json
 
             # Save the specification to a file
             spec_path = os.path.join(output_dir, f"{spec_name}.json")
             with open(spec_path, "w", encoding="utf-8") as fp:
-                json.dump(spec_json, fp, indent=2)
+                json.dump(spec_json, fp, separators=(",", ":"), sort_keys=True)
 
             logger.info("Saved specification to: %s", spec_path)
 
@@ -910,6 +917,7 @@ def create_module_file(
 
     # Generate module docstring
     docstring = (
+        "# pylint: disable=line-too-long\n"
         f'"""\nIconik {spec_name.capitalize()} Models\n\n'
         f"This module contains Pydantic models for the Iconik "
         f'{spec_name.capitalize()} API.\n"""'
@@ -980,6 +988,11 @@ def create_package_files(
     with open(init_path, "w", encoding="utf-8") as fp:
         fp.write('"""Iconik API models package."""\n\n')
 
+        # Import all modules
+        for spec_name in spec_names:
+            module_name = spec_name.replace("-", "_")
+            fp.write(f"from . import {module_name}\n")
+
         # Package version using calendar versioning
         version = get_calendar_version()
         fp.write("# Package version (YYYY.M format)\n")
@@ -1037,11 +1050,6 @@ def create_package_files(
             fp.write("    },\n")
 
         fp.write("}\n\n")
-
-        # Import all modules
-        for spec_name in spec_names:
-            module_name = spec_name.replace("-", "_")
-            fp.write(f"from . import {module_name}\n")
 
         fp.write("\n__all__ = [\n")
         fp.write('    "__version__",\n')
@@ -1174,6 +1182,22 @@ def get_empty_line_removal_command(output_dir: str) -> Optional[List[str]]:
     return cmds + python_files
 
 
+def delete_directory(path):
+    """
+    Recursively deletes a directory and its contents.
+
+    Args:
+        path: The path to the directory to delete.
+    """
+    try:
+        shutil.rmtree(path)
+        logger.debug("Successfully deleted directory: %s", path)
+    except FileNotFoundError:
+        logger.debug("Directory not found: %s", path)
+    except OSError as e:
+        logger.debug("Error deleting directory %s: %s", path, e)
+
+
 # Update main function to include the formatting option
 def main():
     """Main function."""
@@ -1181,16 +1205,42 @@ def main():
         description="Generate Pydantic models from Iconik API specifications"
     )
     parser.add_argument(
+        "--version", action="version", version=f"%(prog)s v{__version__}"
+    )
+    parser.add_argument(
+        "-o",
         "--output-dir",
         default=OUTPUT_DIR,
         help=f"Output directory for the models package (default: {OUTPUT_DIR})",
     )
     parser.add_argument(
+        "-F",
         "--format-code",
         action="store_true",
         help="Format generated code using pycln, isort, and yapf",
     )
+    parser.add_argument(
+        "--keep-downloads",
+        action="store_true",
+        help="Keep the downloaded spec files",
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging"
+    )
+
     args = parser.parse_args()
+
+    if args.debug:
+
+        logging.basicConfig(
+            format=
+            "%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s"  # pylint: disable=line-too-long
+        )
+        logger.setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    logger.debug("Starting file ingest with arguments: %s", args)
 
     output_dir = args.output_dir
     spec_dir = os.path.join(output_dir, "_specs")
@@ -1229,6 +1279,9 @@ def main():
 
     # Format the generated code
     format_generated_code(output_dir, args.format_code)
+
+    if not args.keep_downloads:
+        delete_directory(f"{output_dir}/_specs")
 
     logger.info("Model generation complete. Package created at: %s", output_dir)
     return 0

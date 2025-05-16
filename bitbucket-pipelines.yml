@@ -1,0 +1,145 @@
+# Validator for bitbucket-pipelines.yml at https://bitbucket.org/product/pipelines/validator
+# Prerequisites: $PYPI_USERNAME and $PYPI_PASSWORD setup in the Deployment variables.
+
+image: python:3.11
+
+definitions:
+  steps:
+    - step: &lint
+        name: Lint code
+        caches:
+          - pip
+        script:
+          - pip install --upgrade pip
+          - pip install -e ".[dev]"
+          - ruff --config pyproject.toml check src/
+          - pylint --rcfile pyproject.toml --recursive yes src/
+          - yapf --diff --recursive src/
+        condition:
+          changesets:
+            includePaths:
+              - src/**
+
+    - step: &test
+        name: Test
+        caches:
+          - pip
+        script:
+          - pip install --upgrade pip
+          - pip install -e ".[dev]"
+          - pytest -v tests/* --cov=src/dummy_module --junitxml=test-reports/report.xml
+        artifacts:
+          - test-reports/report.xml
+        #condition:
+        #  changesets:
+        #    includePaths:
+        #      - src/**
+        #      - tests/**
+
+    - step: &security-scan
+        name: Security Scan
+        script:
+          # Run a security scan for sensitive data.
+          # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+          - pipe: atlassian/git-secrets-scan:3.1.0
+
+    - step: &build-push-pypi
+        name: Build package and publish to PyPI
+        caches:
+          - pip
+        script:
+          # Verify we're running on a tag
+          - |
+            if [[ -z "$BITBUCKET_TAG" ]]; then
+              echo "Error: This step should only run on tagged commits"
+              echo "Current ref: $BITBUCKET_REF"
+              exit 1
+            fi
+          
+          # Verify tag matches version in package
+          - pip install --upgrade pip
+          - pip install -e .
+          - |
+            PACKAGE_VERSION=$(python -c "import dummy_module; print(dummy_module.__version__)")
+            if [[ "$BITBUCKET_TAG" != "v$PACKAGE_VERSION" && "$BITBUCKET_TAG" != "$PACKAGE_VERSION" ]]; then
+              echo "Error: Git tag ($BITBUCKET_TAG) does not match package version ($PACKAGE_VERSION)"
+              echo "Tags should be in format 'v2025.5-beta.1' or '2025.5-beta.1' to match the package version"
+              exit 1
+            fi
+          
+          # Install build tools with pinned versions
+          - pip install build==1.2.2.post1 twine==3.8.0
+          
+          # Build package
+          - echo "Building package distribution files..."
+          - python -m build
+          
+          # Verify package quality
+          - echo "Checking package quality with twine..."
+          - twine check dist/*
+          
+          # Verify installation works
+          - echo "Verifying package is installable..."
+          - pip install --no-deps --no-cache-dir dist/*.whl
+          - python -c "import dummy_module; print('Successfully installed version:', dummy_module.__version__)"
+          
+          # Upload to PyPI
+          - echo "Uploading to PyPI..."
+          # Unset password for testing
+          #- unset -v PYPI_PASSWORD
+          - twine upload --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD" dist/*
+        artifacts:
+          - dist/*
+
+
+pipelines:
+  default:
+    - step: *lint
+
+  branches:
+    release:
+      - # noinspection YAMLSchemaValidation
+        stage:
+          name: Deploy to Production
+          deployment: Production
+          steps:
+            - step: *lint
+            - step: *test
+            - step: *security-scan
+
+  # Add a dedicated pipeline for tags
+  tags:
+    '*':
+      - step: *lint
+      - step: *test
+      - step: *security-scan
+      - step: *build-push-pypi
+
+  custom:
+    build-and-push:
+      - step: *build-push-pypi
+
+    lint:
+      - step:
+          caches:
+            - pip
+          script:
+            - pip install --upgrade pip
+            - pip install -e ".[dev]"
+            - ruff --config pyproject.toml check src/
+            - pylint --rcfile pyproject.toml --recursive yes src/
+            - yapf --diff --recursive src/
+
+    security-scan:
+      - step: *security-scan
+
+    test:
+      - step: *test
+
+  pull-requests:
+    '**':
+      - step: *lint
+      - step: *test
+
+  caches:
+    pip: ~/.cache/pip

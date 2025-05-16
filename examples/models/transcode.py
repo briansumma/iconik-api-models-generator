@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Transcode Models
 This module contains Pydantic models for the Iconik Transcode API.
@@ -421,16 +422,6 @@ class EdgeTranscodeJobSchema(BaseModel):
                         ] = Field(default_factory=list)
 
 
-class JobStep(BaseModel):
-    """Represents a JobStep in the Iconik system."""
-    date_created: Optional[datetime] = None
-    date_updated: Optional[datetime] = None
-    id: Optional[str] = None
-    label: Optional[str] = None
-    message: Optional[str] = None
-    status: Optional[str] = None
-
-
 class ThumbnailJob(BaseModel):
     """Represents a ThumbnailJob in the Iconik system."""
     height: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
@@ -484,6 +475,16 @@ class OutputEndpoint(BaseModel):
     """Represents a OutputEndpoint in the Iconik system."""
     headers: Optional[Dict[str, Any]] = Field(default_factory=dict)
     key: str
+
+
+class JobStep(BaseModel):
+    """Represents a JobStep in the Iconik system."""
+    date_created: Optional[datetime] = None
+    date_updated: Optional[datetime] = None
+    id: Optional[str] = None
+    label: Optional[str] = None
+    message: Optional[str] = None
+    status: Optional[str] = None
 
 
 class EdgeTranscodeJobFieldSchema(BaseModel):
@@ -627,11 +628,11 @@ OutputEndpointSchema.model_rebuild()
 JobSchema.model_rebuild()
 Transcoders.model_rebuild()
 EdgeTranscodeJobSchema.model_rebuild()
-JobStep.model_rebuild()
 ThumbnailJob.model_rebuild()
 InputSchema.model_rebuild()
 TranscodeJob.model_rebuild()
 OutputEndpoint.model_rebuild()
+JobStep.model_rebuild()
 EdgeTranscodeJobFieldSchema.model_rebuild()
 EdgeTranscodeInputSchema.model_rebuild()
 EndpointSchema.model_rebuild()

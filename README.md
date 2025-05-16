@@ -1,9 +1,9 @@
 # Iconik API Models Generator
 
-This script downloads the OpenAPI v3 specifications for the Iconik API
-and generates Pydantic v2 models based on the component schemas.
+This tool downloads the OpenAPI v3 specifications for the Iconik API and
+generates Pydantic v2 models based on the component schemas.
 
-## Features
+## Core Functionality
 
 - Downloads all Iconik API specifications
 - Generates Pydantic v2 models for each specification
@@ -13,64 +13,101 @@ and generates Pydantic v2 models based on the component schemas.
 - Creates a well-structured Python package
 - Automatically formats generated code (optional)
 
-## Requirements
+## System Requirements
 
 - Python 3.9 or later
 - Required packages:
-    - requests
-    - jinja2
-    - pydantic (v2)
+    - `requests`: API specification acquisition
+    - `jinja2`: Template processing
+    - `pydantic` (v2): Model generation
 - Optional formatting packages:
-    - pycln
-    - isort
-    - yapf
+    - `pycln`: Import optimization
+    - `isort`: Import organization
+    - `yapf`: Code style normalization
 
-## Installation
+## Installation Procedure
+
+### Basic Setup
 
 ```bash
-# Clone the repository
+# Repository acquisition
 git clone https://github.com/briansumma/iconik-api-models-generator.git
 cd iconik-api-models-generator
 
-# Install dependencies
+# Core dependency installation
 pip install -e .
+```
 
-# For development with formatting tools
+### Development Environment Configuration
+
+```bash
+# Complete development environment
 pip install -e ".[dev]"
-# Or just the formatting tools
+
+# Formatting tools only
 pip install -e ".[formatters]"
 ```
 
-## Usage
+## Operation Procedures
+
+### Basic Execution
 
 ```bash
-# Basic usage
 generate-iconik-models
-
-# With custom output directory
-generate-iconik-models --output-dir my_models
-
-# With code formatting
-generate-iconik-models --format-code
 ```
 
-This will:
+### Configuration Options
 
-1. Download the latest OpenAPI specifications for Iconik API
-2. Extract component schemas from the specifications
-3. Generate Pydantic v2 models based on the schemas
-4. Create a models package with modules for each specification
-5. Optionally format the generated code with pycln, isort, and yapf
-   (when using `--format-code`)
+The tool accepts the following command-line parameters:
 
-The models package will be created in the `models` directory by default.
+| Option             | Syntax                                   | Purpose                                                            |
+| ------------------ | ---------------------------------------- | ------------------------------------------------------------------ |
+| Help               | `-h, --help`                             | Displays usage information and available options                   |
+| Version            | `--version`                              | Shows program's version number and exits                           |
+| Output Directory   | `-o OUTPUT_DIR, --output-dir OUTPUT_DIR` | Specifies target location for generated models (default: `models`) |
+| Code Formatting    | `-F, --format-code`                      | Applies automated formatting using `pycln`, `isort`, and `yapf`    |
+| Preserve Downloads | `--keep-downloads`                       | Retains downloaded specification files after processing            |
+| Debug Mode         | `--debug`                                | Enables verbose diagnostic logging for troubleshooting             |
+
+### Processing Workflow
+
+1. **API Specification Acquisition**
+
+    - Downloads latest OpenAPI v3 specifications from Iconik API
+      endpoints
+    - Validates specification format compatibility
+
+2. **Schema Extraction**
+
+    - Parses component schemas from specification documents
+    - Resolves reference dependencies between schemas
+
+3. **Model Generation**
+
+    - Converts OpenAPI schemas to Pydantic v2 model classes
+    - Applies Python typing system for property validation
+
+4. **Package Structure Creation**
+
+    - Organizes models into logical API-aligned modules
+    - Generates appropriate import statements and package hierarchy
+
+5. **Code Optimization** (when using `--format-code`)
+    - Removes unused imports with `pycln`
+    - Sorts import statements with `isort`
+    - Eliminates trailing whitespace with `sed`
+    - Normalizes code formatting with `yapf`
 
 ## Generated Package Structure
+
+The output directory structure varies depending on command-line
+parameters:
+
+### Standard Output (Default)
 
 ```
 models/
 ├── __init__.py
-├── __version__.py
 ├── acls.py
 ├── assets.py
 ├── auth.py
@@ -87,10 +124,50 @@ models/
 └── users.py
 ```
 
-Each module contains Pydantic models for the corresponding Iconik API
-specification.
+### With Preserved Specifications (`--keep-downloads`)
 
-## Example Usage
+```
+models/
+├── __init__.py
+├── _specs/
+│   ├── acls.json
+│   ├── assets.json
+│   ├── auth.json
+│   ├── automations.json
+│   ├── files.json
+│   ├── jobs.json
+│   ├── metadata.json
+│   ├── notifications.json
+│   ├── search.json
+│   ├── settings.json
+│   ├── stats.json
+│   ├── transcode.json
+│   ├── users-notifications.json
+│   └── users.json
+├── acls.py
+├── assets.py
+├── auth.py
+├── automations.py
+├── files.py
+├── jobs.py
+├── metadata.py
+├── notifications.py
+├── search.py
+├── settings.py
+├── stats.py
+├── transcode.py
+├── users_notifications.py
+└── users.py
+```
+
+Each Python module contains Pydantic models corresponding to the
+associated Iconik API specification. When the `--keep-downloads` flag is
+specified, the original JSON specification files are preserved in the
+`_specs/` directory for reference. This is useful if you're using an IDE
+that can render OpenAPI definitions in JSON files, providing convenient
+visualization and exploration of the API schema during development.
+
+## Implementation Examples
 
 Once you've generated the models, you can use them in your code:
 
@@ -112,67 +189,70 @@ file = files.FileCreateSchema(
 )
 ```
 
-## Manually Formatting Generated Code
+## Code Formatting Procedures
 
-The generated code may have whitespace issues or other formatting
-inconsistencies. You can verify this by running:
+### Automated Formatting
+
+The `--format-code` option applies a comprehensive formatting workflow:
+
+1. Import optimization with `pycln`
+2. Import organization with `isort`
+3. Whitespace normalization with `sed`
+4. Code structure standardization with `yapf`
+
+### Manual Formatting Options
+
+#### Quality Verification
 
 ```bash
-# Check for errors using pylint
+# Verify code quality with pylint
 pylint --errors-only --rcfile pyproject.toml --recursive yes models/
-# Or the default categories
+
+# Full quality assessment
 pylint --rcfile pyproject.toml --recursive yes models/
 ```
 
-While the `--format-code` option will use pycln, isort, and yapf, you
-can manually format the generated code using various tools:
+#### Formatter Selection
 
-### Using Black
+Different code formatters offer varying formatting approaches:
 
-```bash
-# Install black
-pip install black
+| Tool     | Installation           | Usage                                                               | Characteristics                  |
+| -------- | ---------------------- | ------------------------------------------------------------------- | -------------------------------- |
+| Black    | `pip install black`    | `black models/`                                                     | Strict, deterministic formatting |
+| autopep8 | `pip install autopep8` | `autopep8 --in-place --recursive --aggressive --aggressive models/` | Incremental PEP 8 compliance     |
+| Ruff     | `pip install ruff`     | `ruff format models/`                                               | High-performance formatter       |
 
-# Format the code
-black models/
-```
+#### Linting Tools
 
-### Using autopep8
+| Tool   | Installation         | Usage                      | Purpose                   |
+| ------ | -------------------- | -------------------------- | ------------------------- |
+| Flake8 | `pip install flake8` | `flake8 models/`           | Style guide enforcement   |
+| Ruff   | `pip install ruff`   | `ruff check --fix models/` | Fast linting with autofix |
 
-```bash
-# Install autopep8
-pip install autopep8
+### Using `sed` for Trailing Whitespace Removal
 
-# Format the code
-autopep8 --in-place --recursive --aggressive --aggressive models/
-```
+The `sed` (stream editor) implementation varies between POSIX variants,
+requiring different syntax for in-place editing operations:
 
-### Using Flake8 (for linting)
+#### Command Syntax by Operating System
 
-```bash
-# Install flake8
-pip install flake8
+| System Type | Command Pattern                    | Example                                        |
+| ----------- | ---------------------------------- | ---------------------------------------------- |
+| BSD/macOS   | `sed -i '<suffix>' -e '<pattern>'` | `sed -i '' -e 's/[[:space:]]*$//' models/*.py` |
+| GNU/Linux   | `sed -i[<suffix>] -e '<pattern>'`  | `sed -i -e 's/[[:space:]]*$//' models/*.py`    |
 
-# Lint the code
-flake8 models/
-```
+#### Implementation Notes:
 
-### Using Ruff (fast linter/formatter)
+- The `-i` flag enables in-place editing of files
+- BSD implementations require an argument (use empty string `''` for no
+  backup)
+- GNU implementations accept an optional suffix parameter
+- The pattern `'s/[[:space:]]*$//'` removes trailing whitespace from
+  each line
 
-```bash
-# Install ruff
-pip install ruff
+### Recommended Formatting Workflow
 
-# Format the code
-ruff format models/
-
-# Lint and fix automatically
-ruff check --fix models/
-```
-
-### Combination Approach (recommended)
-
-For the best results, use a combination of tools in this order:
+For optimal code quality, apply formatters in this sequence:
 
 ```bash
 # 1. Remove unused imports
@@ -181,8 +261,10 @@ pycln --all models/
 # 2. Sort imports
 isort models/
 
-# 3. Format code style
-black -l 88 models/  # or yapf/autopep8
+# 3. Format code style (choose one)
+black -l 88 models/    # Option 1: Black formatter
+# or
+yapf -i models/*.py    # Option 2: YAPF formatter
 
 # 4. Lint and fix remaining issues
 ruff check --fix models/
@@ -191,20 +273,29 @@ ruff check --fix models/
 pylint --rcfile pyproject.toml models/
 ```
 
-This multi-step approach ensures both proper import organization and
+This multi-stage process ensures both proper import organization and
 consistent code style.
 
-## Troubleshooting
+## Troubleshooting Procedures
 
-If you encounter any issues:
+If you encounter implementation issues:
 
-1. Ensure you have the correct Python version (3.9+)
-2. Verify that all dependencies are installed
-3. Check that you have internet access to download the specifications
-4. If code formatting fails, ensure you have the formatting tools
-   installed (`pip install -e ".[formatters]"`)
-5. For persistent formatting issues, try the manual formatting steps
-   above
+1. **Environment Verification**
+
+    - Ensure Python 3.9+ is correctly installed and active
+    - Verify all dependencies are properly installed
+    - Confirm network connectivity for API specification download
+
+2. **Formatting Issues**
+
+    - Install formatting tools: `pip install -e ".[formatters]"`
+    - Try manual formatting procedures (see section above)
+    - Verify tool compatibility with your Python version
+
+3. **Generation Failures**
+    - Check for API specification changes
+    - Examine error messages for specific schema incompatibilities
+    - Ensure sufficient disk space for generated files
 
 ## License
 

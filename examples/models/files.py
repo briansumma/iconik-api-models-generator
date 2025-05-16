@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """
 Iconik Files Models
 This module contains Pydantic models for the Iconik Files API.
@@ -2431,12 +2432,6 @@ class CollectionKeyframeCreateSchema(BaseModel):
     url: Optional[str] = None
 
 
-class ResolutionType(BaseModel):
-    """Represents a ResolutionType in the Iconik system."""
-    height: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
-    width: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
-
-
 class TimeCodeType(BaseModel):
     """Represents a TimeCodeType in the Iconik system."""
     frames_number: Optional[int] = Field(
@@ -2450,6 +2445,12 @@ class TimeBaseType(BaseModel):
     """Represents a TimeBaseType in the Iconik system."""
     denominator: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
     numerator: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
+
+
+class ResolutionType(BaseModel):
+    """Represents a ResolutionType in the Iconik system."""
+    height: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
+    width: Optional[int] = Field(None, ge=-2147483648, le=2147483647)
 
 
 class CollectionExportSchema(BaseModel):
@@ -3029,9 +3030,9 @@ KeyframeSchema.model_rebuild()
 CollectionKeyframeUpdateSchema.model_rebuild()
 CollectionKeyframeSchema.model_rebuild()
 CollectionKeyframeCreateSchema.model_rebuild()
-ResolutionType.model_rebuild()
 TimeCodeType.model_rebuild()
 TimeBaseType.model_rebuild()
+ResolutionType.model_rebuild()
 CollectionExportSchema.model_rebuild()
 CollectionCopyKeyframesResponseSchema.model_rebuild()
 CollectionCopyKeyframesRequestSchema.model_rebuild()
