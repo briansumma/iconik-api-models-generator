@@ -24,7 +24,7 @@ from jinja2 import Environment, FileSystemLoader
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class {{ model.name }}({{ model.base_class }}):
     {{ field_name }}: {{ field_info.type_hint }}{% if field_info.default is not none %} = {{ field_info.default }}{% endif %}
     {% endfor %}
     {% if model.config %}
-    
+
     class Config:
         {% for key, value in model.config.items() %}
         {{ key }} = {{ value }}
@@ -79,10 +79,10 @@ class {{ model.name }}({{ model.base_class }}):
 def download_specs(output_dir: str) -> Dict[str, Dict[str, Any]]:
     """
     Download the OpenAPI specifications for Iconik API.
-    
+
     Args:
         output_dir: Directory to save the downloaded specifications
-        
+
     Returns:
         Dict mapping specification names to their parsed JSON content
     """
@@ -116,15 +116,15 @@ def download_specs(output_dir: str) -> Dict[str, Dict[str, Any]]:
 
 
 def extract_schemas(
-    specs: Dict[str, Dict[str, Any]]
+    specs: Dict[str, Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
     """
     Extract component schemas from the API specifications.
-    
+
     Args:
         specs: Dictionary mapping specification names to their parsed JSON
             content
-        
+
     Returns:
         Dictionary mapping specification names to their component schemas
     """
@@ -143,15 +143,15 @@ def extract_schemas(
 
 
 def extract_all_schemas(
-    specs: Dict[str, Dict[str, Any]]
+    specs: Dict[str, Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
     """
     Extract all component schemas from the API specifications.
-    
+
     Args:
         specs: Dictionary mapping specification names to their parsed JSON
             content
-        
+
     Returns:
         Dictionary mapping schema names to schema definitions
     """
@@ -170,11 +170,11 @@ def resolve_schema_references(
 ) -> Dict[str, Any]:
     """
     Resolve $ref references in the schema.
-    
+
     Args:
         schema: The schema to resolve references in
         all_schemas: Dictionary of all schemas, keyed by name
-        
+
     Returns:
         Schema with references resolved
     """
@@ -209,10 +209,10 @@ def resolve_schema_references(
         elif isinstance(value, dict):
             resolved[key] = resolve_schema_references(value, all_schemas)
         elif isinstance(value, list):
-            resolved[key] = [
+            resolved[key] = [(
                 resolve_schema_references(item, all_schemas)
-                if isinstance(item, dict) else item for item in value
-            ]
+                if isinstance(item, dict) else item
+            ) for item in value]
         else:
             resolved[key] = value
 
@@ -228,14 +228,14 @@ def openapi_type_to_python(
 ) -> str:
     """
     Convert OpenAPI type to Python type hint.
-    
+
     Args:
         openapi_type: The OpenAPI type
         openapi_format: The OpenAPI format
         is_array: Whether the type is an array
         ref: Reference to another schema
         enum: Enumeration values
-        
+
     Returns:
         Python type hint as a string
     """
@@ -288,7 +288,7 @@ def openapi_type_to_python(
 def handle_oneof_anyof(
     schema: Dict[str, Any],
     all_schemas: Dict[str, Dict[str, Any]],
-    model_names: Set[str] = None
+    model_names: Set[str] = None,
 ) -> str:
     """
     Handle oneOf and anyOf in OpenAPI schemas.
@@ -320,7 +320,7 @@ def handle_oneof_anyof(
                     sub_schema.get("type", "any"),
                     sub_schema.get("format"),
                     is_array=False,
-                    enum=sub_schema.get("enum")
+                    enum=sub_schema.get("enum"),
                 )
                 types.append(type_hint)
 
@@ -342,7 +342,7 @@ def handle_oneof_anyof(
                     sub_schema.get("type", "any"),
                     sub_schema.get("format"),
                     is_array=False,
-                    enum=sub_schema.get("enum")
+                    enum=sub_schema.get("enum"),
                 )
                 types.append(type_hint)
 
@@ -386,7 +386,7 @@ def generate_models(
                     "type_hint": type_hint,
                     "description": schema.get(
                         "description", f"Type alias for {model_name}."
-                    )
+                    ),
                 }
 
                 models.append(model)
@@ -423,10 +423,10 @@ def generate_models(
                 "base_class": "BaseModel",
                 "description": schema.get(
                     "description",
-                    f"Represents a {model_name} in the Iconik system."
+                    f"Represents a {model_name} in the Iconik system.",
                 ),
                 "fields": fields,
-                "config": config
+                "config": config,
             }
 
             models.append(model)
@@ -443,7 +443,7 @@ def generate_model_field(
     field_name: str,
     schema: Dict[str, Any],
     required: List[str],
-    model_names: Set[str] = None
+    model_names: Set[str] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """
     Generate a Pydantic field definition from an OpenAPI schema property.
@@ -477,11 +477,41 @@ def generate_model_field(
 
     # Convert Python keywords
     if field_name in [
-        "class", "from", "import", "return", "pass", "if", "else", "for",
-        "while", "as", "def", "try", "except", "finally", "raise", "with",
-        "yield", "async", "await", "lambda", "None", "True", "False", "and",
-        "or", "not", "in", "is", "global", "nonlocal", "assert", "del", "elif",
-        "continue", "break"
+        "class",
+        "from",
+        "import",
+        "return",
+        "pass",
+        "if",
+        "else",
+        "for",
+        "while",
+        "as",
+        "def",
+        "try",
+        "except",
+        "finally",
+        "raise",
+        "with",
+        "yield",
+        "async",
+        "await",
+        "lambda",
+        "None",
+        "True",
+        "False",
+        "and",
+        "or",
+        "not",
+        "in",
+        "is",
+        "global",
+        "nonlocal",
+        "assert",
+        "del",
+        "elif",
+        "continue",
+        "break",
     ]:
         field_name = f"{field_name}_"
 
@@ -499,19 +529,22 @@ def generate_model_field(
         is_required = original_field_name in required
 
         field_info = {
-            "type_hint": f"Optional[{type_hint}]"
-            if not is_required else type_hint,
-            "default": "None" if not is_required else None
+            "type_hint": (
+                f"Optional[{type_hint}]" if not is_required else type_hint
+            ),
+            "default": "None" if not is_required else None,
         }
 
         # Add alias if the field name has been changed
         if has_invalid_chars:
             if field_info["default"] is None:
-                field_info["default"
-                           ] = f'Field(..., alias="{original_field_name}")'
+                field_info["default"] = (
+                    f'Field(..., alias="{original_field_name}")'
+                )
             else:
-                field_info["default"
-                           ] = f'Field(None, alias="{original_field_name}")'
+                field_info["default"] = (
+                    f'Field(None, alias="{original_field_name}")'
+                )
 
         return field_name, field_info
 
@@ -522,19 +555,22 @@ def generate_model_field(
         is_required = original_field_name in required
 
         field_info = {
-            "type_hint": f"Optional[{type_hint}]"
-            if not is_required else type_hint,
-            "default": "None" if not is_required else None
+            "type_hint": (
+                f"Optional[{type_hint}]" if not is_required else type_hint
+            ),
+            "default": "None" if not is_required else None,
         }
 
         # Add alias if the field name has been changed
         if has_invalid_chars:
             if field_info["default"] is None:
-                field_info["default"
-                           ] = f'Field(..., alias="{original_field_name}")'
+                field_info["default"] = (
+                    f'Field(..., alias="{original_field_name}")'
+                )
             else:
-                field_info["default"
-                           ] = f'Field(None, alias="{original_field_name}")'
+                field_info["default"] = (
+                    f'Field(None, alias="{original_field_name}")'
+                )
 
         return field_name, field_info
 
@@ -554,7 +590,7 @@ def generate_model_field(
             item_type = openapi_type_to_python(
                 items.get("type", "any"),
                 items.get("format"),
-                enum=items.get("enum")
+                enum=items.get("enum"),
             )
 
         type_hint = f"List[{item_type}]"
@@ -571,9 +607,10 @@ def generate_model_field(
                 default = None
 
         return field_name, {
-            "type_hint": f"Optional[{type_hint}]"
-            if not is_required else type_hint,
-            "default": default
+            "type_hint": (
+                f"Optional[{type_hint}]" if not is_required else type_hint
+            ),
+            "default": default,
         }
 
     # Handle objects
@@ -591,7 +628,7 @@ def generate_model_field(
             else:
                 value_type = openapi_type_to_python(
                     schema["additionalProperties"].get("type", "any"),
-                    schema["additionalProperties"].get("format")
+                    schema["additionalProperties"].get("format"),
                 )
 
             type_hint = f"Dict[str, {value_type}]"
@@ -611,9 +648,10 @@ def generate_model_field(
                 default = None
 
         return field_name, {
-            "type_hint": f"Optional[{type_hint}]"
-            if not is_required else type_hint,
-            "default": default
+            "type_hint": (
+                f"Optional[{type_hint}]" if not is_required else type_hint
+            ),
+            "default": default,
         }
 
     # Handle other types
@@ -670,19 +708,19 @@ def generate_model_field(
 
     return field_name, {
         "type_hint": f"Optional[{type_hint}]" if not is_required else type_hint,
-        "default": default
+        "default": default,
     }
 
 
 def collect_model_dependencies(
-    models: List[Dict[str, Any]]
+    models: List[Dict[str, Any]],
 ) -> Dict[str, Set[str]]:
     """
     Collect dependencies between models.
-    
+
     Args:
         models: List of model definitions
-        
+
     Returns:
         Dictionary mapping model names to sets of dependent model names
     """
@@ -716,14 +754,14 @@ def collect_model_dependencies(
 
 
 def sort_models_by_dependency(
-    models: List[Dict[str, Any]]
+    models: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
     """
     Sort models by dependency order to ensure dependent models come first.
-    
+
     Args:
         models: List of model definitions
-        
+
     Returns:
         Sorted list of model definitions
     """
@@ -778,10 +816,10 @@ def sort_models_by_dependency(
 def generate_model_code(models: List[Dict[str, Any]]) -> str:
     """
     Generate Python code for Pydantic models.
-    
+
     Args:
         models: List of model definitions
-        
+
     Returns:
         Python code as a string
     """
@@ -811,7 +849,7 @@ def create_module_file(
     # Essential imports to avoid circular dependencies
     imports = {
         "from __future__ import annotations",
-        "from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING"
+        "from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING",
     }
     imports.add("from pydantic import BaseModel, Field")
 
@@ -873,7 +911,7 @@ def create_module_file(
     # Generate module docstring
     docstring = (
         f'"""\nIconik {spec_name.capitalize()} Models\n\n'
-        f'This module contains Pydantic models for the Iconik '
+        f"This module contains Pydantic models for the Iconik "
         f'{spec_name.capitalize()} API.\n"""'
     )
 
@@ -930,76 +968,75 @@ def create_package_files(
     output_dir: str, spec_names: List[str], specs: Dict[str, Dict[str, Any]]
 ) -> None:
     """
-    Create package files (__init__.py, __version__.py) for the models package.
+    Create package files (__init__.py) for the models package.
 
     Args:
         output_dir: Directory for the models package
         spec_names: List of specification names
         specs: Dictionary containing the full specifications with version info
     """
-    # Create __version__.py with versions from all specs
-    version_path = os.path.join(output_dir, "__version__.py")
-    with open(version_path, "w", encoding="utf-8") as fp:
-        fp.write('"""Version information for Iconik API models."""\n\n')
+    # Create __init__.py with imports and version info
+    init_path = os.path.join(output_dir, "__init__.py")
+    with open(init_path, "w", encoding="utf-8") as fp:
+        fp.write('"""Iconik API models package."""\n\n')
 
         # Package version using calendar versioning
         version = get_calendar_version()
-        fp.write('# Package version (YYYY.M format)\n')
+        fp.write("# Package version (YYYY.M format)\n")
         fp.write(f'__version__ = "{version}"\n\n')
 
         # Document versioning scheme
         fp.write('"""\n')
-        fp.write('This project uses calendar-based versioning in the format\n')
-        fp.write('`YYYY.M[.P][-modifier.N]` where:\n')
-        fp.write('\n')
-        fp.write('- `YYYY` - Four-digit year\n')
-        fp.write('- `M` - Month number (1-12)\n')
-        fp.write('- `P` - (Optional) Sequential patch number\n')
+        fp.write("This project uses calendar-based versioning in the format\n")
+        fp.write("`YYYY.M[.P][-modifier.N]` where:\n")
+        fp.write("\n")
+        fp.write("- `YYYY` - Four-digit year\n")
+        fp.write("- `M` - Month number (1-12)\n")
+        fp.write("- `P` - (Optional) Sequential patch number\n")
         fp.write(
-            '- `modifier` - (Optional) Pre-release identifier (alpha/beta/rc)\n'
+            "- `modifier` - (Optional) Pre-release identifier (alpha/beta/rc)\n"
         )
-        fp.write('- `N` - (Optional) Pre-release sequence number\n')
-        fp.write('\n')
-        fp.write('Examples:\n')
-        fp.write('\n')
-        fp.write('2025.5          -> May 2025 release\n')
-        fp.write('2025.5.1        -> May 2025 patch 1\n')
-        fp.write('2025.5-alpha.1  -> First alpha release for May 2025\n')
-        fp.write('2025.5-beta.1   -> First beta release for May 2025\n')
-        fp.write('2025.5-rc.1     -> First release candidate for May 2025\n')
+        fp.write("- `N` - (Optional) Pre-release sequence number\n")
+        fp.write("\n")
+        fp.write("Examples:\n")
+        fp.write("\n")
+        fp.write("2025.5          -> May 2025 release\n")
+        fp.write("2025.5.1        -> May 2025 patch 1\n")
+        fp.write("2025.5-alpha.1  -> First alpha release for May 2025\n")
+        fp.write("2025.5-beta.1   -> First beta release for May 2025\n")
+        fp.write("2025.5-rc.1     -> First release candidate for May 2025\n")
         fp.write('"""\n\n')
 
-        # Add individual spec versions
-        fp.write('# API specification versions\n')
-        fp.write('spec_versions = {\n')
+        # Add API information with detailed metadata
+        fp.write("# API specification information\n")
+        fp.write("__info__ = {\n")
 
         for spec_name in spec_names:
             module_name = spec_name.replace("-", "_")
 
-            # Extract version from spec info
+            # Extract info from spec
             version = "unknown"
+            openapi_version = "unknown"
+            title = f"Iconik {spec_name.capitalize()}"
+
             if spec_name in specs and "info" in specs[spec_name]:
                 spec_info = specs[spec_name]["info"]
                 if "version" in spec_info:
                     version = spec_info["version"]
+                if "title" in spec_info:
+                    title = spec_info["title"]
 
-                # Include title information as a comment
-                title = spec_info.get(
-                    "title", f"Iconik {spec_name.capitalize()}"
-                )
-                fp.write(f'    # {title}\n')
+            # Get OpenAPI version
+            if spec_name in specs and "openapi" in specs[spec_name]:
+                openapi_version = specs[spec_name]["openapi"]
 
-            fp.write(f'    "{module_name}": "{version}",\n')
+            fp.write(f'    "{module_name}": {{\n')
+            fp.write(f'        "version": "{version}",\n')
+            fp.write(f'        "openapi": "{openapi_version}",\n')
+            fp.write(f'        "title": "{title}"\n')
+            fp.write("    },\n")
 
-        fp.write('}\n')
-
-    logger.info("Created version file: %s", version_path)
-
-    # Create __init__.py with imports
-    init_path = os.path.join(output_dir, "__init__.py")
-    with open(init_path, "w", encoding="utf-8") as fp:
-        fp.write('"""Iconik API models package."""\n\n')
-        fp.write("from . import __version__\n\n")
+        fp.write("}\n\n")
 
         # Import all modules
         for spec_name in spec_names:
@@ -1007,11 +1044,12 @@ def create_package_files(
             fp.write(f"from . import {module_name}\n")
 
         fp.write("\n__all__ = [\n")
-        fp.write("    \"__version__\",\n")
+        fp.write('    "__version__",\n')
+        fp.write('    "__info__",\n')
 
         for spec_name in spec_names:
             module_name = spec_name.replace("-", "_")
-            fp.write(f"    \"{module_name}\",\n")
+            fp.write(f'    "{module_name}",\n')
 
         fp.write("]\n")
 
@@ -1030,32 +1068,50 @@ def format_generated_code(output_dir: str, format_code: bool = False) -> None:
         logger.info("Skipping code formatting. Use --format-code to enable.")
         return
 
-    formatters = [{
-        "name": "pycln",
-        "cmd": ["pycln", "--all", output_dir],
-        "check": lambda: shutil.which("pycln") is not None
-    }, {
-        "name": "isort",
-        "cmd": [
-            "isort", "--balanced", "--ensure-newline-before-comments",
-            "--force-grid-wrap=0", "--trailing-comma", "--line-length=80",
-            "--lines-after-imports=2", "--multi-line=3", "--profile=pycharm",
-            "--skip-glob=**/venv/**", "--extend-skip-glob=**/.venv/**",
-            "--extend-skip-glob=**/env/**", "--extend-skip-glob=**/.env/**",
-            "--use-parentheses", output_dir
-        ],
-        "check": lambda: shutil.which("isort") is not None
-    }, {
-        "name": "remove_empty_lines",
-        "cmd": get_empty_line_removal_command(output_dir),
-        "check": lambda: shutil.which("sed") is not None
-    }, {
-        "name": "yapf",
-        "cmd": [
-            "yapf", "--in-place", "--recursive", "--print-modified", output_dir
-        ],
-        "check": lambda: shutil.which("yapf") is not None
-    }]
+    formatters = [
+        {
+            "name": "pycln",
+            "cmd": ["pycln", "--all", output_dir],
+            "check": lambda: shutil.which("pycln") is not None,
+        },
+        {
+            "name": "isort",
+            "cmd": [
+                "isort",
+                "--balanced",
+                "--ensure-newline-before-comments",
+                "--force-grid-wrap=0",
+                "--trailing-comma",
+                "--line-length=80",
+                "--lines-after-imports=2",
+                "--multi-line=3",
+                "--profile=pycharm",
+                "--skip-glob=**/venv/**",
+                "--extend-skip-glob=**/.venv/**",
+                "--extend-skip-glob=**/env/**",
+                "--extend-skip-glob=**/.env/**",
+                "--use-parentheses",
+                output_dir,
+            ],
+            "check": lambda: shutil.which("isort") is not None,
+        },
+        {
+            "name": "remove_empty_lines",
+            "cmd": get_empty_line_removal_command(output_dir),
+            "check": lambda: shutil.which("sed") is not None,
+        },
+        {
+            "name": "yapf",
+            "cmd": [
+                "yapf",
+                "--in-place",
+                "--recursive",
+                "--print-modified",
+                output_dir,
+            ],
+            "check": lambda: shutil.which("yapf") is not None,
+        },
+    ]
 
     for formatter in formatters:
         if formatter["check"]():
@@ -1064,7 +1120,7 @@ def format_generated_code(output_dir: str, format_code: bool = False) -> None:
             if formatter["cmd"] is None:
                 logger.warning(
                     "Skipping %s as it's not properly supported on this OS",
-                    formatter["name"]
+                    formatter["name"],
                 )
                 continue
 
@@ -1083,8 +1139,10 @@ def format_generated_code(output_dir: str, format_code: bool = False) -> None:
                     )
             except subprocess.CalledProcessError as e:
                 logger.error(
-                    "%s failed with code %d: %s", formatter["name"],
-                    e.returncode, e.stderr
+                    "%s failed with code %d: %s",
+                    formatter["name"],
+                    e.returncode,
+                    e.stderr,
                 )
         else:
             logger.warning("%s not found. Skipping.", formatter["name"])
@@ -1110,10 +1168,9 @@ def get_empty_line_removal_command(output_dir: str) -> Optional[List[str]]:
     python_files = glob.glob(
         os.path.join(output_dir, "**/*.py"), recursive=True
     )
-    cmds = ["sed", "-i", "", "-e", "s/[[:space:]]*$//", "-e", "/^$/d"
-            ] if system == "Darwin" else [
-                "sed", "-i", "-e", "s/[[:space:]]*$//", "-e", "/^$/d"
-            ]
+    cmds = (["sed", "-i", "", "-e", "s/[[:space:]]*$//", "-e", "/^$/d"]
+            if system == "Darwin" else
+            ["sed", "-i", "-e", "s/[[:space:]]*$//", "-e", "/^$/d"])
     return cmds + python_files
 
 
@@ -1126,12 +1183,12 @@ def main():
     parser.add_argument(
         "--output-dir",
         default=OUTPUT_DIR,
-        help=f"Output directory for the models package (default: {OUTPUT_DIR})"
+        help=f"Output directory for the models package (default: {OUTPUT_DIR})",
     )
     parser.add_argument(
         "--format-code",
         action="store_true",
-        help="Format generated code using pycln, isort, and yapf"
+        help="Format generated code using pycln, isort, and yapf",
     )
     args = parser.parse_args()
 
@@ -1165,8 +1222,9 @@ def main():
 
     # Create package files
     create_package_files(
-        output_dir, [name for name in SPEC_NAMES if models_by_spec.get(name)],
-        specs
+        output_dir,
+        [name for name in SPEC_NAMES if models_by_spec.get(name)],
+        specs,
     )
 
     # Format the generated code
